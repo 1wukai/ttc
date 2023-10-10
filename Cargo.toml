@@ -9,3 +9,4 @@ description = "common terminal tools commands"
 [dependencies]
 clap = { version = "4.4.6", features = ["derive"] }
 text-colorizer = "1"
+chrono = "0.4"

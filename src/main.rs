@@ -1,5 +1,6 @@
 use clap::{arg, Command};
 mod converter;
+mod datetime;
 
 fn cli() -> Command {
     Command::new("ttc")
@@ -17,17 +18,37 @@ fn cli() -> Command {
                         .short_flag('w')
                         .about("Convert words to various forms of output")
                         .arg_required_else_help(true)
-                        .arg(arg!(<WORD>).required(true).num_args(0..=1))
-                        .arg(arg!(--outtype <OUTTYPE>).short('o').value_parser([
-                            "Lowercase",
-                            "Uppercase",
-                            "Camelcase",
-                            "Constantcase",
-                            "Capitalcase",
-                            "Dotcase",
-                            "Headercase",
-                            "Snakecase",
-                        ])),
+                        .arg(arg!(<WORD>).required(true).num_args(1..=1))
+                        .arg(
+                            arg!(--outtype <OUTTYPE>)
+                                .num_args(1..=1)
+                                .short('o')
+                                .value_parser([
+                                    "Lowercase",
+                                    "Uppercase",
+                                    "Camelcase",
+                                    "Constantcase",
+                                    "Capitalcase",
+                                    "Dotcase",
+                                    "Headercase",
+                                    "Snakecase",
+                                ]),
+                        ),
+                ),
+        )
+        .subcommand(
+            Command::new("datetime")
+                .short_flag('d')
+                .about("Output various time displays")
+                .arg(
+                    arg!(--datetime <DATETIME> "Appointed datetime")
+                        .short('d')
+                        .num_args(1..=1),
+                )
+                .arg(
+                    arg!(--timestamp <TIMESTAMP> "Appointed timestamp")
+                        .short('t')
+                        .num_args(1..=1),
                 ),
         )
 }
@@ -54,6 +75,26 @@ fn main() {
                     unreachable!("Unsupported subcommand `{name}`")
                 }
             }
+        }
+        Some(("datetime", sub_matches)) => {
+            let datetime = sub_matches
+                .get_one::<String>("datetime")
+                .map(|s| s.as_str())
+                .unwrap_or("");
+            if !datetime.is_empty() {
+                datetime::exec(datetime::Arg::Datetime(datetime.to_string()));
+                return;
+            }
+            let timestamp = sub_matches
+                .get_one::<String>("timestamp")
+                .map(|s| s.parse::<i64>().unwrap_or(0))
+                .unwrap_or(0);
+            if timestamp > 0 {
+                datetime::exec(datetime::Arg::Timestamp(timestamp));
+                return;
+            }
+
+            datetime::exec(datetime::Arg::Unknown);
         }
         _ => println!("The command was not found\n `ttc -h` Print help"),
     }
