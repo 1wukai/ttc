@@ -34,6 +34,13 @@ fn cli() -> Command {
                                     "Snakecase",
                                 ]),
                         ),
+                )
+                .subcommand(
+                    Command::new("qr")
+                        .short_flag('q')
+                        .about("Convert text to QR code")
+                        .arg_required_else_help(true)
+                        .arg(arg!(<TEXT>).required(true).num_args(1..=1)),
                 ),
         )
         .subcommand(
@@ -70,6 +77,13 @@ fn main() {
                         .map(|s| s.as_str())
                         .unwrap_or("");
                     converter::case::case(word, out_type.into());
+                }
+                ("qr", sub_matches) => {
+                    let text = sub_matches
+                        .get_one::<String>("TEXT")
+                        .map(|s| s.as_str())
+                        .unwrap_or("null");
+                    converter::qr::exec(text);
                 }
                 (name, _) => {
                     unreachable!("Unsupported subcommand `{name}`")

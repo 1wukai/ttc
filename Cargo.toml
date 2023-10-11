@@ -10,3 +10,6 @@ description = "common terminal tools commands"
 clap = { version = "4.4.6", features = ["derive"] }
 text-colorizer = "1"
 chrono = "0.4"
+qrcode = "0.12.0"
+image = { version = "0.24.7"}
+ansi_term = "0.12"
