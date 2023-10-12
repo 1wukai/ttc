@@ -2,7 +2,7 @@
 
 Terminal tool command
 
-## commands
+## Commands
 
 ### 1. coverter
 
@@ -17,5 +17,12 @@ Convert text to QR code
 ### 2. date-time
 
 Output and according to input output various time display
+
+## Local commands
+
+Execute local command
+```sh
+ttc -l git log 
+```
 
 ## Implementation plan

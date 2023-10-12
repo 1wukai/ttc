@@ -1,13 +1,20 @@
 use clap::{arg, Command};
+use std::process::{Command as StdCommand, Stdio};
+use text_colorizer::*;
 mod converter;
 mod datetime;
 
 fn cli() -> Command {
     Command::new("ttc")
         .about("Common termianl tools commands")
-        .subcommand_required(true)
         .arg_required_else_help(true)
         .allow_external_subcommands(true)
+        .arg(
+            arg!(--local <LOCAL> "Execute the local terminal command")
+                .short('l')
+                .required(false)
+                .num_args(1),
+        )
         .subcommand(
             Command::new("converter")
                 .short_flag('c')
@@ -61,8 +68,12 @@ fn cli() -> Command {
 }
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let exec_completed = exec_local(&args);
+    if exec_completed {
+        return;
+    }
     let matches = cli().get_matches();
-
     match matches.subcommand() {
         Some(("converter", sub_matches)) => {
             let converter_command = sub_matches.subcommand().unwrap_or(("case", sub_matches));
@@ -110,6 +121,44 @@ fn main() {
 
             datetime::exec(datetime::Arg::Unknown);
         }
-        _ => println!("The command was not found\n `ttc -h` Print help"),
+        _ => print_not_found_info(args[1..].join(" ").as_str()),
     }
+}
+
+fn print_not_found_info(arg: &str) {
+    let print_info = format!("ttc: command not found: {}", arg.blue());
+    println!("{}", print_info.red());
+}
+
+fn exec_local(args: &Vec<String>) -> bool {
+    let mut local_commmand = "";
+    let mut local_args = vec![];
+    let mut local_flag: bool = false;
+    for (i, a) in args.iter().enumerate() {
+        if i == 1 && (a == "-l" || a == "--local") {
+            local_flag = true;
+            continue;
+        }
+        if local_commmand != "" {
+            local_args.push(a.as_str());
+            continue;
+        }
+        if local_flag {
+            local_commmand = a;
+        }
+    }
+    if local_commmand != "" {
+        let output_result = StdCommand::new(local_commmand)
+            .arg(local_args.join(" "))
+            .stdout(Stdio::inherit())
+            .output();
+        match output_result {
+            Ok(out) => {
+                let print_info = format!("{}", String::from_utf8_lossy(&out.stdout));
+                print!("{}", print_info);
+            }
+            Err(_) => print_not_found_info(local_commmand),
+        }
+    }
+    local_commmand != ""
 }
