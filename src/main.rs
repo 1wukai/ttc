@@ -131,7 +131,6 @@ fn print_not_found_info(arg: &str) {
 }
 
 fn exec_local(args: &Vec<String>) -> bool {
-    let mut local_commmand = "";
     let mut local_args = vec![];
     let mut local_flag: bool = false;
     for (i, a) in args.iter().enumerate() {
@@ -139,26 +138,21 @@ fn exec_local(args: &Vec<String>) -> bool {
             local_flag = true;
             continue;
         }
-        if local_commmand != "" {
+        if local_flag {
             local_args.push(a.as_str());
             continue;
         }
-        if local_flag {
-            local_commmand = a;
-        }
     }
-    if local_commmand != "" {
-        let output_result = StdCommand::new(local_commmand)
+    if local_flag {
+        let output_result = StdCommand::new("sh")
+            .arg("-c")
             .arg(local_args.join(" "))
             .stdout(Stdio::inherit())
             .output();
         match output_result {
-            Ok(out) => {
-                let print_info = format!("{}", String::from_utf8_lossy(&out.stdout));
-                print!("{}", print_info);
-            }
-            Err(_) => print_not_found_info(local_commmand),
+            Ok(out) if out.status.success() => {}
+            _ => print_not_found_info(local_args.join(" ").as_str()),
         }
     }
-    local_commmand != ""
+    local_flag
 }
